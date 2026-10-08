@@ -8,19 +8,25 @@ A physics-inspired high-performance simulation framework for **periodic coherent
 
 ## ✨ What does it look like?
 
-**Position Space → Momentum Plane** — watch scattered wave-packets collapse into sharp diffraction peaks:
+**Position Space → Momentum Plane** — watch scattered wave-packets collapse into sharp diffraction peaks (diagonal wavevector, 6 momentum peaks):
 
-![Evolution](assets/basic_evolution.svg)
+![Evolution](assets/diagonal_evolution_compressed.gif)
 
-**Different injection lattices produce different momentum-space crystals:**
+**Final state — position density (left) vs momentum-plane intensity (right):**
 
-![Interference Patterns](assets/wave_interference.svg)
+![Final State](assets/diagonal_final.png)
 
 **Peak convergence over evolution steps:**
 
-![Convergence](assets/basic_convergence.svg)
+![Convergence](assets/diagonal_convergence.png)
 
-> **Generate the real thing:** Run `python examples/basic_simulation.py` to produce high-resolution PNG heatmaps and an animated GIF. Run `python examples/wave_interference.py` for the three-panel comparison. The SVGs above are placeholders that render instantly on GitHub.
+**Four different physics regimes — classic, diagonal, Grover, and chiral:**
+
+| Classic Hadamard | Diagonal Wavevector | Grover Coin | Chiral Bias |
+|---|---|---|---|
+| ![classic](assets/classic_final.png) | ![diagonal](assets/diagonal_final.png) | ![grover](assets/grover_final.png) | ![chiral](assets/chiral_final.png) |
+
+> **Assets are auto-generated** by GitHub Actions on every push. Run `python examples/generate_demo_assets.py` locally to produce high-resolution versions.
 
 ---
 
@@ -79,9 +85,11 @@ MomentumPlane/
 │   └── pipeline.py      # ⚡ End-to-end orchestration (Injector → Lattice → Field → Viz)
 ├── examples/
 │   ├── basic_simulation.py
+│   ├── generate_demo_assets.py
 │   └── wave_interference.py
 ├── tests/               # 24 unit tests (unitarity, Parseval, reproducibility...)
 ├── docs/                # Theory derivation notes
+├── .github/workflows/   # Auto-generate demo assets via GitHub Actions
 ├── app.py               # Streamlit interactive dashboard
 └── requirements.txt
 ```
@@ -123,6 +131,7 @@ streamlit run app.py
 - **24 unit tests** — covering unitarity, energy conservation, shape contracts, determinism
 - **Interactive web UI** — Streamlit dashboard with live parameter tuning
 - **Animated GIF export** — perfect for papers, presentations, and showing off
+- **CI/CD** — GitHub Actions auto-generate demo assets on every push
 
 ---
 
