@@ -1,0 +1,68 @@
+name: Generate Demo Assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'momentum_plane/**'
+      - 'examples/generate_demo_assets.py'
+      - '.github/workflows/generate-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install numpy scipy matplotlib pillow pytest
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+      - name: Generate demo assets
+        run: python examples/generate_demo_assets.py
+
+      - name: Compress GIFs
+        run: |
+          python3 -c "
+          from PIL import Image
+          import os, glob
+          for src in glob.glob('assets/*_evolution.gif'):
+              if '_compressed' in src:
+                  continue
+              dst = src.replace('.gif', '_compressed.gif')
+              img = Image.open(src)
+              frames = []
+              try:
+                  while True:
+                      f = img.copy().convert('RGB')
+                      w, h = f.size
+                      f = f.resize((520, int(h*520/w)), Image.LANCZOS)
+                      f = f.convert('P', palette=Image.ADAPTIVE, colors=48)
+                      frames.append(f)
+                      img.seek(len(frames))
+              except EOFError:
+                  pass
+              frames[0].save(dst, save_all=True, append_images=frames[1:],
+                             duration=140, loop=0, optimize=True)
+              print(f'Compressed {src} -> {dst} ({os.path.getsize(dst)//1024}KB)')
+          "
+
+      - name: Commit and push assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/*.png assets/*.gif
+          git diff --staged --quiet || (git commit -m "docs: auto-generate demo assets [skip ci]" && git push)
