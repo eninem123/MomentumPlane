@@ -4,6 +4,17 @@
 
 </div>
 
+<div align="center">
+
+[![CI](https://github.com/eninem123/MomentumPlane/actions/workflows/ci.yml/badge.svg)](https://github.com/eninem123/MomentumPlane/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![JAX](https://img.shields.io/badge/JAX-accelerated-9cf.svg)](https://github.com/google/jax)
+[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eninem123/MomentumPlane/blob/main/examples/momentum_plane_demo.ipynb)
+
+</div>
+
 # 🌊 MomentumPlane — 动量平面引擎
 
 > *"在动量空间的晶格上，每一次相干注入都是一次低语，每一次离散跳跃都是一次回响。当无数低语在傅里叶的尽头相遇，它们汇聚成光。"*
@@ -58,6 +69,9 @@ cd MomentumPlane
 # 安装依赖
 pip install -r requirements.txt
 
+# 可选：JAX 后端（GPU 加速）
+pip install jax jaxlib
+
 # 运行基础仿真（在 assets/ 目录生成 PNG + GIF）
 python examples/basic_simulation.py
 
@@ -77,6 +91,14 @@ print(f"检测到的最终动量峰数: {result['n_peaks'][-1]}")
 print(f"峰值强度: {result['peak_intensities'][-1]:.4f}")
 ```
 
+### JAX 后端（GPU + 自动微分）
+
+```python
+# 同样的 API，只需设置 backend='jax'
+cfg = SimulationConfig(grid_size=128, n_steps=50, backend='jax', seed=42)
+result = MomentumPlanePipeline(cfg).run()  # jit 编译，GPU 加速
+```
+
 ---
 
 ## 🏗️ 架构设计
@@ -85,17 +107,20 @@ print(f"峰值强度: {result['peak_intensities'][-1]:.4f}")
 MomentumPlane/
 ├── momentum_plane/
 │   ├── injector.py      # 周期性相干波包注入
-│   ├── lattice.py       # 离散时间量子漫步（Hadamard/Grover 硬币 + 位移）
+│   ├── lattice.py       # DTQW（Hadamard/Grover 硬币 + 位移）— NumPy 后端
+│   ├── lattice_jax.py   # DTQW — JAX 后端（jit, GPU, autodiff, vmap）
 │   ├── synthesizer.py   # 2D FFT 动量平面合成 + 峰值检测
 │   ├── visualizer.py    # 热力图、相位图、动画 GIF 导出
-│   └── pipeline.py      # 端到端编排（注入 → 跳跃 → 合成 → 可视化）
+│   └── pipeline.py      # 端到端编排（backend: numpy/jax）
 ├── examples/
 │   ├── basic_simulation.py
+│   ├── benchmark.py          # NumPy vs JAX 性能基准
 │   ├── generate_demo_assets.py
+│   ├── momentum_plane_demo.ipynb  # Google Colab 笔记本
 │   └── wave_interference.py
-├── tests/               # 24 个单元测试（幺正性、Parseval、可复现性...）
-├── docs/                # 理论推导文档
-├── .github/workflows/   # GitHub Actions 自动生成演示素材
+├── tests/               # 36 个单元测试（幺正性、Parseval、NumPy/JAX 一致性...）
+├── docs/                # 理论推导 + 技术文章
+├── .github/workflows/   # CI（ruff + pytest-cov）+ 自动素材生成
 ├── app.py               # Streamlit 交互式面板
 └── requirements.txt
 ```
@@ -106,6 +131,7 @@ MomentumPlane/
 |--------|---------|------|
 | **Injector** | 相干波包叠加 | 高斯包络 × 平面波相位，放置于子晶格 |
 | **LatticeHop** | DTQW 幺正演化 | 4 方向硬币（C⁴）+ 条件位移，周期/反射边界 |
+| **LatticeHopJAX** | 同样的物理，JIT+GPU | `jax.jit` 单步，`lax.scan` 循环，`vmap` 批量，`grad` 自动微分 |
 | **FieldPlane** | 动量空间衍射 | 2D FFT + fftshift，切趾窗，峰值检测 |
 | **Visualizer** | 科学可视化 | 对数热力图，相位图，FuncAnimation GIF |
 
@@ -130,14 +156,16 @@ streamlit run app.py
 ## 📊 核心特性
 
 - **物理严格** — 幺正演化验证、Parseval 能量守恒测试
+- **双后端** — NumPy（默认）和 JAX（GPU + jit + 自动微分 + vmap），数值完全一致
 - **双硬币算符** — Hadamard（平衡型）和 Grover（扩散型），支持手性相位偏置
 - **灵活边界** — 周期性（环面）或反射性
 - **动量峰检测** — 自动局部最大值检测 + 非极大值抑制
 - **可复现** — 所有随机元素使用种子 RNG
-- **24 个单元测试** — 覆盖幺正性、能量守恒、形状契约、确定性
+- **36 个单元测试** — 覆盖幺正性、能量守恒、形状契约、NumPy/JAX 一致性
 - **交互式 Web UI** — Streamlit 面板，实时参数调节
 - **动画 GIF 导出** — 完美适用于论文、演示和展示
-- **CI/CD** — GitHub Actions 每次 push 自动生成演示素材
+- **CI/CD** — ruff 代码检查 + pytest-cov 覆盖率，Python 3.10/3.11/3.12
+- **Colab 一键运行** — 交互式笔记本，无需本地安装
 
 ---
 
@@ -149,6 +177,8 @@ streamlit run app.py
 - 为什么规则注入 → 衍射光栅 → 动量梳
 - DTQW 色散关系及其对峰展宽的影响
 - 相位抖动作为退相干参数
+
+技术深度文章：[`docs/technical_article.md`](docs/technical_article.md)
 
 ---
 
@@ -191,6 +221,6 @@ streamlit run app.py
 
 **如果这个项目让你有所感触，给个 ⭐ 吧**
 
-*用 NumPy、SciPy、Matplotlib 和无数个深夜的物理思考构建。*
+*用 NumPy、SciPy、Matplotlib、JAX 和无数个深夜的物理思考构建。*
 
 </div>
