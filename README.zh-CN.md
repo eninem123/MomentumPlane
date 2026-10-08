@@ -69,9 +69,6 @@ cd MomentumPlane
 # 安装依赖
 pip install -r requirements.txt
 
-# 可选：JAX 后端（GPU 加速）
-pip install jax jaxlib
-
 # 运行基础仿真（在 assets/ 目录生成 PNG + GIF）
 python examples/basic_simulation.py
 
@@ -91,14 +88,6 @@ print(f"检测到的最终动量峰数: {result['n_peaks'][-1]}")
 print(f"峰值强度: {result['peak_intensities'][-1]:.4f}")
 ```
 
-### JAX 后端（GPU + 自动微分）
-
-```python
-# 同样的 API，只需设置 backend='jax'
-cfg = SimulationConfig(grid_size=128, n_steps=50, backend='jax', seed=42)
-result = MomentumPlanePipeline(cfg).run()  # jit 编译，GPU 加速
-```
-
 ---
 
 ## 🏗️ 架构设计
@@ -109,18 +98,20 @@ MomentumPlane/
 │   ├── injector.py      # 周期性相干波包注入
 │   ├── lattice.py       # DTQW（Hadamard/Grover 硬币 + 位移）— NumPy 后端
 │   ├── lattice_jax.py   # DTQW — JAX 后端（jit, GPU, autodiff, vmap）
+│   ├── boundary.py      # 几何边界掩码（圆环、多边形、条形、自定义）
 │   ├── synthesizer.py   # 2D FFT 动量平面合成 + 峰值检测
 │   ├── visualizer.py    # 热力图、相位图、动画 GIF 导出
 │   └── pipeline.py      # 端到端编排（backend: numpy/jax）
 ├── examples/
 │   ├── basic_simulation.py
 │   ├── benchmark.py          # NumPy vs JAX 性能基准
+│   ├── boundary_demo.py      # 拓扑边界约束演示
 │   ├── generate_demo_assets.py
 │   ├── momentum_plane_demo.ipynb  # Google Colab 笔记本
 │   └── wave_interference.py
-├── tests/               # 36 个单元测试（幺正性、Parseval、NumPy/JAX 一致性...）
-├── docs/                # 理论推导 + 技术文章
-├── .github/workflows/   # CI（ruff + pytest-cov）+ 自动素材生成
+├── tests/               # 55 个单元测试（幺正性、Parseval、NumPy/JAX 一致性、边界约束...）
+├── docs/                # 理论推导文档
+├── .github/workflows/   # GitHub Actions 自动生成演示素材
 ├── app.py               # Streamlit 交互式面板
 └── requirements.txt
 ```
@@ -131,7 +122,6 @@ MomentumPlane/
 |--------|---------|------|
 | **Injector** | 相干波包叠加 | 高斯包络 × 平面波相位，放置于子晶格 |
 | **LatticeHop** | DTQW 幺正演化 | 4 方向硬币（C⁴）+ 条件位移，周期/反射边界 |
-| **LatticeHopJAX** | 同样的物理，JIT+GPU | `jax.jit` 单步，`lax.scan` 循环，`vmap` 批量，`grad` 自动微分 |
 | **FieldPlane** | 动量空间衍射 | 2D FFT + fftshift，切趾窗，峰值检测 |
 | **Visualizer** | 科学可视化 | 对数热力图，相位图，FuncAnimation GIF |
 
@@ -153,19 +143,48 @@ streamlit run app.py
 
 ---
 
+## 🔷 拓扑边界约束
+
+受**拓扑光子学**启发——波在晶格边界上单向无损传输，对缺陷免疫——MomentumPlane 支持几何边界掩码，将量子漫步束缚在特定形状内。
+
+```python
+from momentum_plane import MomentumPlanePipeline, SimulationConfig
+
+# 圆环（环形波导）
+cfg = SimulationConfig(
+    grid_size=96, n_steps=35, seed=42,
+    boundary_mask={"shape": "ring", "inner_radius": 15, "outer_radius": 35},
+)
+result = MomentumPlanePipeline(cfg).run()
+
+# 六边形腔
+cfg = SimulationConfig(
+    boundary_mask={"shape": "polygon", "n_sides": 6, "radius": 30},
+)
+
+# 其他形状：圆形、三角形、正方形、条形（水平/垂直）、或自定义布尔掩码
+```
+
+| 自由传播 | 圆环约束 | 六边形腔 | 三角形腔 |
+|---|---|---|---|
+| ![free](assets/boundary_free.png) | ![ring](assets/boundary_ring.png) | ![hex](assets/boundary_hexagon.png) | ![tri](assets/boundary_triangle.png) |
+
+> 左面板中的青色轮廓为边界掩码。运行 `python examples/boundary_demo.py` 可重新生成全部四组对比图。
+
+---
+
 ## 📊 核心特性
 
 - **物理严格** — 幺正演化验证、Parseval 能量守恒测试
-- **双后端** — NumPy（默认）和 JAX（GPU + jit + 自动微分 + vmap），数值完全一致
 - **双硬币算符** — Hadamard（平衡型）和 Grover（扩散型），支持手性相位偏置
 - **灵活边界** — 周期性（环面）或反射性
+- **拓扑约束** — 几何边界掩码（圆环、多边形、条形、自定义）束缚量子漫步，受拓扑光子学启发
 - **动量峰检测** — 自动局部最大值检测 + 非极大值抑制
 - **可复现** — 所有随机元素使用种子 RNG
-- **36 个单元测试** — 覆盖幺正性、能量守恒、形状契约、NumPy/JAX 一致性
+- **55 个单元测试** — 覆盖幺正性、能量守恒、形状契约、NumPy/JAX 一致性、边界约束
 - **交互式 Web UI** — Streamlit 面板，实时参数调节
 - **动画 GIF 导出** — 完美适用于论文、演示和展示
-- **CI/CD** — ruff 代码检查 + pytest-cov 覆盖率，Python 3.10/3.11/3.12
-- **Colab 一键运行** — 交互式笔记本，无需本地安装
+- **CI/CD** — ruff 代码检查 + pytest-cov 覆盖率 + 自动素材生成
 
 ---
 
@@ -177,8 +196,6 @@ streamlit run app.py
 - 为什么规则注入 → 衍射光栅 → 动量梳
 - DTQW 色散关系及其对峰展宽的影响
 - 相位抖动作为退相干参数
-
-技术深度文章：[`docs/technical_article.md`](docs/technical_article.md)
 
 ---
 
@@ -221,6 +238,6 @@ streamlit run app.py
 
 **如果这个项目让你有所感触，给个 ⭐ 吧**
 
-*用 NumPy、SciPy、Matplotlib、JAX 和无数个深夜的物理思考构建。*
+*用 NumPy、SciPy、Matplotlib 和无数个深夜的物理思考构建。*
 
 </div>
