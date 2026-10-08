@@ -1,6 +1,12 @@
-# 🌊 MomentumPlane — 动量平面引擎
+<div align="right">
 
-> *"在动量空间的晶格上，每一次相干注入都是一次低语，每一次离散跳跃都是一次回响。当无数低语在傅里叶的尽头相遇，它们汇聚成光。"*
+[**English**](README.md) | [简体中文](README.zh-CN.md)
+
+</div>
+
+# 🌊 MomentumPlane
+
+> *"On the lattice of momentum space, every coherent injection is a whisper, every discrete hop an echo. When countless whispers meet at the end of Fourier, they converge into light."*
 
 A physics-inspired high-performance simulation framework for **periodic coherent injection** and **discrete quantum hopping** on momentum-space lattices. Inspired by quantum optics, discrete-time quantum walks, and the breathtaking diffraction patterns that emerge when order meets interference.
 
@@ -78,11 +84,11 @@ print(f"Peak intensity: {result['peak_intensities'][-1]:.4f}")
 ```
 MomentumPlane/
 ├── momentum_plane/
-│   ├── injector.py      # 📡 Periodic coherent wave-packet injection
-│   ├── lattice.py       # 🔀 Discrete-time quantum walk (Hadamard/Grover coin + shift)
-│   ├── synthesizer.py   # 💫 2D FFT momentum-plane synthesis + peak detection
-│   ├── visualizer.py    # 🎨 Heatmaps, phase portraits, animated GIFs
-│   └── pipeline.py      # ⚡ End-to-end orchestration (Injector → Lattice → Field → Viz)
+│   ├── injector.py      # Periodic coherent wave-packet injection
+│   ├── lattice.py       # Discrete-time quantum walk (Hadamard/Grover coin + shift)
+│   ├── synthesizer.py   # 2D FFT momentum-plane synthesis + peak detection
+│   ├── visualizer.py    # Heatmaps, phase portraits, animated GIFs
+│   └── pipeline.py      # End-to-end orchestration (Injector -> Lattice -> Field -> Viz)
 ├── examples/
 │   ├── basic_simulation.py
 │   ├── generate_demo_assets.py
@@ -98,8 +104,8 @@ MomentumPlane/
 
 | Module | Physics | Code |
 |--------|---------|------|
-| **Injector** | Coherent wave-packet superposition | Gaussian envelope × plane-wave phase, placed on sub-lattice |
-| **LatticeHop** | DTQW unitary evolution | 4-direction coin (C⁴) + conditional shift, periodic/reflective BC |
+| **Injector** | Coherent wave-packet superposition | Gaussian envelope x plane-wave phase, placed on sub-lattice |
+| **LatticeHop** | DTQW unitary evolution | 4-direction coin (C^4) + conditional shift, periodic/reflective BC |
 | **FieldPlane** | Momentum-space diffraction | 2D FFT + fftshift, apodisation windows, peak finding |
 | **Visualizer** | Scientific visualisation | Log-scale heatmaps, phase portraits, FuncAnimation GIFs |
 
@@ -140,7 +146,7 @@ streamlit run app.py
 See [`docs/theory.md`](docs/theory.md) for the full derivation:
 
 - The momentum-space amplitude of N coherently injected packets
-- Why regular injection → diffraction grating → momentum comb
+- Why regular injection -> diffraction grating -> momentum comb
 - DTQW dispersion relation and its effect on peak broadening
 - Phase jitter as a decoherence parameter
 
@@ -149,7 +155,7 @@ See [`docs/theory.md`](docs/theory.md) for the full derivation:
 ## 🛣️ Roadmap
 
 - [ ] **Rust core** — rewrite `lattice.py` evolution loop in Rust with PyO3 bindings (10-50x speedup)
-- [ ] **GPU acceleration** — CuPy backend for large grids (256×256 and above)
+- [ ] **GPU acceleration** — CuPy backend for large grids (256x256 and above)
 - [ ] **3D extension** — momentum volume rendering for 3D lattices
 - [ ] **QuTiP integration** — compare DTQW results with master-equation open quantum systems
 - [ ] **Live web demo** — deploy Streamlit app to Community Cloud
