@@ -69,9 +69,6 @@ cd MomentumPlane
 # Install dependencies
 pip install -r requirements.txt
 
-# Optional: JAX backend for GPU acceleration
-pip install jax jaxlib
-
 # Run a basic simulation (generates PNG + GIF in assets/)
 python examples/basic_simulation.py
 
@@ -91,14 +88,6 @@ print(f"Final momentum peaks detected: {result['n_peaks'][-1]}")
 print(f"Peak intensity: {result['peak_intensities'][-1]:.4f}")
 ```
 
-### JAX Backend (GPU + Autodiff)
-
-```python
-# Same API, just set backend='jax'
-cfg = SimulationConfig(grid_size=128, n_steps=50, backend='jax', seed=42)
-result = MomentumPlanePipeline(cfg).run()  # jit-compiled, GPU-accelerated
-```
-
 ---
 
 ## 🏗️ Architecture
@@ -109,18 +98,20 @@ MomentumPlane/
 │   ├── injector.py      # Periodic coherent wave-packet injection
 │   ├── lattice.py       # DTQW (Hadamard/Grover coin + shift) — NumPy backend
 │   ├── lattice_jax.py   # DTQW — JAX backend (jit, GPU, autodiff, vmap)
+│   ├── boundary.py      # Geometric boundary masks (ring, polygon, strip, custom)
 │   ├── synthesizer.py   # 2D FFT momentum-plane synthesis + peak detection
 │   ├── visualizer.py    # Heatmaps, phase portraits, animated GIFs
 │   └── pipeline.py      # End-to-end orchestration (backend: numpy/jax)
 ├── examples/
 │   ├── basic_simulation.py
 │   ├── benchmark.py          # NumPy vs JAX performance benchmark
+│   ├── boundary_demo.py      # Topological boundary confinement demo
 │   ├── generate_demo_assets.py
 │   ├── momentum_plane_demo.ipynb  # Google Colab notebook
 │   └── wave_interference.py
-├── tests/               # 36 unit tests (unitarity, Parseval, NumPy/JAX parity...)
-├── docs/                # Theory derivation + technical article
-├── .github/workflows/   # CI (ruff + pytest-cov) + auto asset generation
+├── tests/               # 55 unit tests (unitarity, Parseval, NumPy/JAX parity, boundary...)
+├── docs/                # Theory derivation notes
+├── .github/workflows/   # Auto-generate demo assets via GitHub Actions
 ├── app.py               # Streamlit interactive dashboard
 └── requirements.txt
 ```
@@ -131,7 +122,6 @@ MomentumPlane/
 |--------|---------|------|
 | **Injector** | Coherent wave-packet superposition | Gaussian envelope x plane-wave phase, placed on sub-lattice |
 | **LatticeHop** | DTQW unitary evolution | 4-direction coin (C^4) + conditional shift, periodic/reflective BC |
-| **LatticeHopJAX** | Same physics, JIT+GPU | `jax.jit` step, `lax.scan` loop, `vmap` batch, `grad` autodiff |
 | **FieldPlane** | Momentum-space diffraction | 2D FFT + fftshift, apodisation windows, peak finding |
 | **Visualizer** | Scientific visualisation | Log-scale heatmaps, phase portraits, FuncAnimation GIFs |
 
@@ -153,19 +143,48 @@ streamlit run app.py
 
 ---
 
+## 🔷 Topological Boundary Confinement
+
+Inspired by **topological photonics** — where waves propagate defect-immune along lattice edges — MomentumPlane supports geometric boundary masks that trap the quantum walk inside specific shapes.
+
+```python
+from momentum_plane import MomentumPlanePipeline, SimulationConfig
+
+# Ring (annular waveguide)
+cfg = SimulationConfig(
+    grid_size=96, n_steps=35, seed=42,
+    boundary_mask={"shape": "ring", "inner_radius": 15, "outer_radius": 35},
+)
+result = MomentumPlanePipeline(cfg).run()
+
+# Hexagonal cavity
+cfg = SimulationConfig(
+    boundary_mask={"shape": "polygon", "n_sides": 6, "radius": 30},
+)
+
+# Other shapes: circle, triangle, square, strip (horizontal/vertical), or custom boolean mask
+```
+
+| Free Propagation | Ring Confinement | Hexagon Cavity | Triangle Cavity |
+|---|---|---|---|
+| ![free](assets/boundary_free.png) | ![ring](assets/boundary_ring.png) | ![hex](assets/boundary_hexagon.png) | ![tri](assets/boundary_triangle.png) |
+
+> The cyan outline in each left panel shows the boundary mask. Run `python examples/boundary_demo.py` to regenerate all four comparisons.
+
+---
+
 ## 📊 Key Features
 
 - **Physically rigorous** — unitary evolution verified, Parseval energy conservation tested
-- **Dual backends** — NumPy (default) and JAX (GPU + jit + autodiff + vmap), numerically identical
 - **Two coin operators** — Hadamard (balanced) and Grover (diffusion), with optional chiral phase bias
 - **Flexible boundaries** — periodic (torus) or reflective
+- **Topological confinement** — geometric boundary masks (ring, polygon, strip, custom) trap the quantum walk, inspired by topological photonics
 - **Momentum peak detection** — automatic local-maximum finding with non-maximum suppression
 - **Reproducible** — seeded RNG for all stochastic elements
-- **36 unit tests** — covering unitarity, energy conservation, shape contracts, NumPy/JAX parity
+- **55 unit tests** — covering unitarity, energy conservation, shape contracts, NumPy/JAX parity, boundary confinement
 - **Interactive web UI** — Streamlit dashboard with live parameter tuning
 - **Animated GIF export** — perfect for papers, presentations, and showing off
-- **CI/CD** — ruff linting + pytest-cov coverage on Python 3.10/3.11/3.12
-- **Colab-ready** — one-click interactive notebook, no local install needed
+- **CI/CD** — ruff linting + pytest-cov coverage + auto asset generation on every push
 
 ---
 
@@ -177,8 +196,6 @@ See [`docs/theory.md`](docs/theory.md) for the full derivation:
 - Why regular injection -> diffraction grating -> momentum comb
 - DTQW dispersion relation and its effect on peak broadening
 - Phase jitter as a decoherence parameter
-
-Technical deep-dive article: [`docs/technical_article.md`](docs/technical_article.md)
 
 ---
 
@@ -221,6 +238,6 @@ Inspired by the beauty of quantum optics, the elegance of discrete-time quantum 
 
 **If this made you feel something, give it a ⭐**
 
-*Built with NumPy, SciPy, Matplotlib, JAX, and a lot of late-night physics.*
+*Built with NumPy, SciPy, Matplotlib, and a lot of late-night physics.*
 
 </div>
