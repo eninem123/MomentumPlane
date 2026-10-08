@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="100%" style="stop-color:#1a0a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="320" fill="url(#bg2)"/>
+  <text x="450" y="60" text-anchor="middle" font-family="monospace" font-size="22" fill="#e0e0e0">Momentum-Plane Interference Patterns</text>
+  <g>
+    <rect x="50" y="90" width="250" height="160" fill="#111" stroke="#333" stroke-width="1"/>
+    <text x="175" y="115" text-anchor="middle" font-family="monospace" font-size="12" fill="#ff6b35">Fine lattice (stride=4)</text>
+    <text x="175" y="175" text-anchor="middle" font-family="monospace" font-size="11" fill="#666">dense momentum comb</text>
+  </g>
+  <g>
+    <rect x="325" y="90" width="250" height="160" fill="#111" stroke="#333" stroke-width="1"/>
+    <text x="450" y="115" text-anchor="middle" font-family="monospace" font-size="12" fill="#f7c59f">Coarse lattice (stride=16)</text>
+    <text x="450" y="175" text-anchor="middle" font-family="monospace" font-size="11" fill="#666">sparse sharp peaks</text>
+  </g>
+  <g>
+    <rect x="600" y="90" width="250" height="160" fill="#111" stroke="#333" stroke-width="1"/>
+    <text x="725" y="115" text-anchor="middle" font-family="monospace" font-size="12" fill="#2ec4b6">Diagonal wavevector</text>
+    <text x="725" y="175" text-anchor="middle" font-family="monospace" font-size="11" fill="#666">rotated diffraction</text>
+  </g>
+  <text x="450" y="290" text-anchor="middle" font-family="monospace" font-size="13" fill="#555">Run: python examples/wave_interference.py to generate the comparison image</text>
+</svg>
