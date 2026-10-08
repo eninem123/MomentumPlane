@@ -35,6 +35,10 @@ class SimulationConfig:
     record_every: int = 1
     seed: int | None = 42
     backend: str = "numpy"  # "numpy" or "jax" (JAX = GPU + jit + autodiff)
+    # Geometric boundary confinement (topological photonics inspired)
+    # Set to a dict like {"shape": "ring", "inner_radius": 20, "outer_radius": 40}
+    # or None for no confinement. See momentum_plane.boundary.BoundaryMask for options.
+    boundary_mask: dict | None = None
 
 
 class MomentumPlanePipeline:
@@ -62,6 +66,14 @@ class MomentumPlanePipeline:
         )
         self.field = FieldPlane(grid_size=config.grid_size)
         self.visualizer = Visualizer()
+
+        # Geometric boundary mask (topological confinement)
+        self._boundary_mask = None
+        if config.boundary_mask is not None:
+            from .boundary import BoundaryMask
+            self._boundary_mask = BoundaryMask(
+                grid_size=config.grid_size, **config.boundary_mask
+            )
 
         # Select backend: NumPy (default) or JAX (GPU + jit + autodiff)
         if config.backend == "jax":
@@ -122,6 +134,13 @@ class MomentumPlanePipeline:
         record_every = max(1, cfg.record_every)
         for t in range(cfg.n_steps):
             psi = self.lattice.step(psi)
+            # Apply geometric boundary mask (absorbing confinement)
+            if self._boundary_mask is not None:
+                psi = _to_np(psi)
+                psi = self._boundary_mask.apply(psi)
+                if self._use_jax:
+                    import jax.numpy as jnp
+                    psi = jnp.asarray(psi)
             if (t + 1) % record_every == 0:
                 pos_density = _to_np(self.lattice.probability_density(psi))
                 pos_field = _to_np(self.lattice.position_field(psi))
@@ -147,4 +166,5 @@ class MomentumPlanePipeline:
             "final_momentum_intensity": final_momentum_intensity,
             "peak_intensities": peak_intensities,
             "n_peaks": n_peaks_list,
+            "boundary_mask": self._boundary_mask.mask if self._boundary_mask is not None else None,
         }
