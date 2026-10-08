@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "momentum-plane"
+version = "0.1.0"
+description = "A physics-inspired simulation engine for periodic coherent injection and discrete quantum hopping on momentum-space lattices."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "MomentumPlane Contributors" }]
+keywords = ["quantum-walk", "momentum-space", "quantum-optics", "simulation", "fft", "physics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.28"]
+dev = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+include = ["momentum_plane*"]
