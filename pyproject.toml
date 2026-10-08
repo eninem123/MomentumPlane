@@ -28,7 +28,23 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = ["streamlit>=1.28"]
-dev = ["pytest>=7.4"]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.5"]
+jax = ["jax>=0.4", "jaxlib>=0.4"]
 
 [tool.setuptools.packages.find]
 include = ["momentum_plane*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["docs/", "assets/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
+ignore = ["E501", "E402", "N806", "B905"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
