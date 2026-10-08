@@ -10,15 +10,17 @@ A physics-inspired high-performance simulation framework for **periodic coherent
 
 **Position Space → Momentum Plane** — watch scattered wave-packets collapse into sharp diffraction peaks:
 
-![Evolution](assets/basic_evolution.gif)
+![Evolution](assets/basic_evolution.svg)
 
 **Different injection lattices produce different momentum-space crystals:**
 
-![Interference Patterns](assets/wave_interference.png)
+![Interference Patterns](assets/wave_interference.svg)
 
 **Peak convergence over evolution steps:**
 
-![Convergence](assets/basic_convergence.png)
+![Convergence](assets/basic_convergence.svg)
+
+> **Generate the real thing:** Run `python examples/basic_simulation.py` to produce high-resolution PNG heatmaps and an animated GIF. Run `python examples/wave_interference.py` for the three-panel comparison. The SVGs above are placeholders that render instantly on GitHub.
 
 ---
 
