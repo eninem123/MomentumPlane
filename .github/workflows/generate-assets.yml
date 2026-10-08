@@ -6,6 +6,7 @@ on:
     paths:
       - 'momentum_plane/**'
       - 'examples/generate_demo_assets.py'
+      - 'examples/boundary_demo.py'
       - '.github/workflows/generate-assets.yml'
   workflow_dispatch:
 
@@ -33,6 +34,9 @@ jobs:
 
       - name: Generate demo assets
         run: python examples/generate_demo_assets.py
+
+      - name: Generate boundary confinement demo
+        run: python examples/boundary_demo.py
 
       - name: Compress GIFs
         run: |
