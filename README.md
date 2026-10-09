@@ -194,9 +194,7 @@ print(result.params)       # {'kx': ..., 'ky': ..., 'sigma': ..., 'phase_offset'
 print(result.loss_history) # convergence curve
 ```
 
-| Target | Initial (random) | Optimized | Loss Curve |
-|---|---|---|---|
-| ![target](assets/inverse_design_peaks.png) | | | |
+![Inverse Design — Two Peak Target](assets/inverse_design_peaks.png)
 
 > The optimizer discovers wavevectors and packet widths that reproduce arbitrary target distributions. Supports both MSE and correlation loss functions. Run `python examples/inverse_design_demo.py` for a full demo with peak and ring targets.
 

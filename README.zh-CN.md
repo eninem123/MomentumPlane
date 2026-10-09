@@ -194,9 +194,7 @@ print(result.params)       # {'kx': ..., 'ky': ..., 'sigma': ..., 'phase_offset'
 print(result.loss_history) # 收敛曲线
 ```
 
-| 目标 | 初始（随机） | 优化后 | 损失曲线 |
-|---|---|---|---|
-| ![target](assets/inverse_design_peaks.png) | | | |
+![逆向设计 — 双峰目标](assets/inverse_design_peaks.png)
 
 > 优化器自动发现能复现任意目标分布的波矢和波包宽度。支持 MSE 和相关系数两种损失函数。运行 `python examples/inverse_design_demo.py` 查看双峰和环形目标的完整演示。
 
