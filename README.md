@@ -99,6 +99,7 @@ MomentumPlane/
 │   ├── lattice.py       # DTQW (Hadamard/Grover coin + shift) — NumPy backend
 │   ├── lattice_jax.py   # DTQW — JAX backend (jit, GPU, autodiff, vmap)
 │   ├── boundary.py      # Geometric boundary masks (ring, polygon, strip, custom)
+│   ├── inverse_design.py # Gradient-based inverse design (JAX autodiff + Adam)
 │   ├── synthesizer.py   # 2D FFT momentum-plane synthesis + peak detection
 │   ├── visualizer.py    # Heatmaps, phase portraits, animated GIFs
 │   └── pipeline.py      # End-to-end orchestration (backend: numpy/jax)
@@ -106,10 +107,11 @@ MomentumPlane/
 │   ├── basic_simulation.py
 │   ├── benchmark.py          # NumPy vs JAX performance benchmark
 │   ├── boundary_demo.py      # Topological boundary confinement demo
+│   ├── inverse_design_demo.py # Inverse design optimization demo
 │   ├── generate_demo_assets.py
 │   ├── momentum_plane_demo.ipynb  # Google Colab notebook
 │   └── wave_interference.py
-├── tests/               # 55 unit tests (unitarity, Parseval, NumPy/JAX parity, boundary...)
+├── tests/               # 76 unit tests (unitarity, Parseval, NumPy/JAX parity, boundary, inverse design...)
 ├── docs/                # Theory derivation notes
 ├── .github/workflows/   # Auto-generate demo assets via GitHub Actions
 ├── app.py               # Streamlit interactive dashboard
@@ -173,15 +175,43 @@ cfg = SimulationConfig(
 
 ---
 
+## 🎯 Inverse Design (Gradient-Based)
+
+Instead of simulating forward from known parameters, **specify the desired momentum plane and let the optimizer find the injection parameters**. The entire pipeline — injection → DTQW → FFT → intensity — is fully differentiable via JAX, so gradients flow end-to-end.
+
+```python
+from momentum_plane.inverse_design import optimize, target_with_peaks, InverseDesignConfig
+
+# 1. Define your target (e.g., two peaks at specific momentum coordinates)
+target = target_with_peaks(64, [(20, 24), (44, 24)], peak_sigma=4.0)
+
+# 2. Optimize injection parameters (kx, ky, sigma, phase_offset) via Adam
+cfg = InverseDesignConfig(grid_size=64, stride=8, n_steps=20, n_iter=200, lr=0.02)
+result = optimize(target, cfg)
+
+# 3. Inspect the solution
+print(result.params)       # {'kx': ..., 'ky': ..., 'sigma': ..., 'phase_offset': ...}
+print(result.loss_history) # convergence curve
+```
+
+| Target | Initial (random) | Optimized | Loss Curve |
+|---|---|---|---|
+| ![target](assets/inverse_design_peaks.png) | | | |
+
+> The optimizer discovers wavevectors and packet widths that reproduce arbitrary target distributions. Supports both MSE and correlation loss functions. Run `python examples/inverse_design_demo.py` for a full demo with peak and ring targets.
+
+---
+
 ## 📊 Key Features
 
 - **Physically rigorous** — unitary evolution verified, Parseval energy conservation tested
 - **Two coin operators** — Hadamard (balanced) and Grover (diffusion), with optional chiral phase bias
 - **Flexible boundaries** — periodic (torus) or reflective
 - **Topological confinement** — geometric boundary masks (ring, polygon, strip, custom) trap the quantum walk, inspired by topological photonics
+- **Inverse design** — fully differentiable pipeline (JAX autodiff) + Adam optimizer; specify target momentum, recover injection parameters
 - **Momentum peak detection** — automatic local-maximum finding with non-maximum suppression
 - **Reproducible** — seeded RNG for all stochastic elements
-- **55 unit tests** — covering unitarity, energy conservation, shape contracts, NumPy/JAX parity, boundary confinement
+- **76 unit tests** — covering unitarity, energy conservation, shape contracts, NumPy/JAX parity, boundary confinement, gradient flow, optimization convergence
 - **Interactive web UI** — Streamlit dashboard with live parameter tuning
 - **Animated GIF export** — perfect for papers, presentations, and showing off
 - **CI/CD** — ruff linting + pytest-cov coverage + auto asset generation on every push
