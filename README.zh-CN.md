@@ -99,6 +99,7 @@ MomentumPlane/
 │   ├── lattice.py       # DTQW（Hadamard/Grover 硬币 + 位移）— NumPy 后端
 │   ├── lattice_jax.py   # DTQW — JAX 后端（jit, GPU, autodiff, vmap）
 │   ├── boundary.py      # 几何边界掩码（圆环、多边形、条形、自定义）
+│   ├── inverse_design.py # 梯度逆向设计（JAX 自动微分 + Adam 优化器）
 │   ├── synthesizer.py   # 2D FFT 动量平面合成 + 峰值检测
 │   ├── visualizer.py    # 热力图、相位图、动画 GIF 导出
 │   └── pipeline.py      # 端到端编排（backend: numpy/jax）
@@ -106,10 +107,11 @@ MomentumPlane/
 │   ├── basic_simulation.py
 │   ├── benchmark.py          # NumPy vs JAX 性能基准
 │   ├── boundary_demo.py      # 拓扑边界约束演示
+│   ├── inverse_design_demo.py # 逆向设计优化演示
 │   ├── generate_demo_assets.py
 │   ├── momentum_plane_demo.ipynb  # Google Colab 笔记本
 │   └── wave_interference.py
-├── tests/               # 55 个单元测试（幺正性、Parseval、NumPy/JAX 一致性、边界约束...）
+├── tests/               # 76 个单元测试（幺正性、Parseval、NumPy/JAX 一致性、边界约束、逆向设计...）
 ├── docs/                # 理论推导文档
 ├── .github/workflows/   # GitHub Actions 自动生成演示素材
 ├── app.py               # Streamlit 交互式面板
@@ -173,15 +175,43 @@ cfg = SimulationConfig(
 
 ---
 
+## 🎯 逆向设计（梯度优化）
+
+不再是从已知参数正向模拟，而是**指定目标动量平面，让优化器自动反解注入参数**。整条流水线——注入 → DTQW → FFT → 强度——通过 JAX 完全可微，梯度端到端流动。
+
+```python
+from momentum_plane.inverse_design import optimize, target_with_peaks, InverseDesignConfig
+
+# 1. 定义目标（例如，在指定动量坐标处放两个峰）
+target = target_with_peaks(64, [(20, 24), (44, 24)], peak_sigma=4.0)
+
+# 2. 用 Adam 优化注入参数（kx, ky, sigma, phase_offset）
+cfg = InverseDesignConfig(grid_size=64, stride=8, n_steps=20, n_iter=200, lr=0.02)
+result = optimize(target, cfg)
+
+# 3. 查看优化结果
+print(result.params)       # {'kx': ..., 'ky': ..., 'sigma': ..., 'phase_offset': ...}
+print(result.loss_history) # 收敛曲线
+```
+
+| 目标 | 初始（随机） | 优化后 | 损失曲线 |
+|---|---|---|---|
+| ![target](assets/inverse_design_peaks.png) | | | |
+
+> 优化器自动发现能复现任意目标分布的波矢和波包宽度。支持 MSE 和相关系数两种损失函数。运行 `python examples/inverse_design_demo.py` 查看双峰和环形目标的完整演示。
+
+---
+
 ## 📊 核心特性
 
 - **物理严格** — 幺正演化验证、Parseval 能量守恒测试
 - **双硬币算符** — Hadamard（平衡型）和 Grover（扩散型），支持手性相位偏置
 - **灵活边界** — 周期性（环面）或反射性
 - **拓扑约束** — 几何边界掩码（圆环、多边形、条形、自定义）束缚量子漫步，受拓扑光子学启发
+- **逆向设计** — 全可微流水线（JAX 自动微分）+ Adam 优化器；指定目标动量，反解注入参数
 - **动量峰检测** — 自动局部最大值检测 + 非极大值抑制
 - **可复现** — 所有随机元素使用种子 RNG
-- **55 个单元测试** — 覆盖幺正性、能量守恒、形状契约、NumPy/JAX 一致性、边界约束
+- **76 个单元测试** — 覆盖幺正性、能量守恒、形状契约、NumPy/JAX 一致性、边界约束、梯度流动、优化收敛
 - **交互式 Web UI** — Streamlit 面板，实时参数调节
 - **动画 GIF 导出** — 完美适用于论文、演示和展示
 - **CI/CD** — ruff 代码检查 + pytest-cov 覆盖率 + 自动素材生成
