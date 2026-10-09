@@ -145,10 +145,11 @@ class MomentumPlanePipeline:
                 pos_density = _to_np(self.lattice.probability_density(psi))
                 pos_field = _to_np(self.lattice.position_field(psi))
                 mom_intensity = self.field.intensity(pos_field)
+                mom_raw = self.field.raw_intensity(pos_field)
                 peaks = self.field.peak_positions(pos_field, threshold=0.3, min_distance=4)
                 position_history.append(pos_density)
                 momentum_history.append(mom_intensity)
-                peak_intensities.append(float(mom_intensity.max()))
+                peak_intensities.append(float(mom_raw.max()))
                 n_peaks_list.append(len(peaks))
 
         final_position = _to_np(self.lattice.probability_density(psi))
